@@ -26,7 +26,6 @@ body {
 @media (max-width: 1280px) { #cols { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); grid-template-areas: "left right" "mid right"; } }
 @media (max-width: 860px) { #cols { grid-template-columns: minmax(0, 1fr); grid-template-areas: "left" "mid" "right"; } #right { position: static; }
   #page { width: 100%; margin: 0; border: 0; box-shadow: none; } }
-#footer { text-align: center; color: #7f90ab; font-size: 11px; padding: 8px; border-top: 1px solid #2c3d5a; background: #111a2a; }
 
 .panel { border: 1px solid #3d5a85; background: #1e2a40; }
 .bar { color: #fff; font-weight: bold; padding: 5px 9px; border-bottom: 1px solid #10203a; text-shadow: 1px 1px 0 #10203a;
