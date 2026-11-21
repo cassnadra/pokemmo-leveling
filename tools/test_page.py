@@ -1,4 +1,4 @@
-# Drives the order page in headless Edge; orders go to a stand-in relay address that is intercepted (nothing is sent).
+# Drives the order page in headless Edge. The relay's address and Cloudflare's bot check are intercepted (nothing is sent).
 # Run: python tools/test_page.py OUTDIR
 import json, sys, os, pathlib
 from datetime import datetime, timedelta
@@ -21,13 +21,22 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errors.append('page error: %s' % e))
     def hook(route):
         sent.append(json.loads(route.request.post_data)); route.fulfill(status=204, body='')
-    pg.route('https://relay.test/**', hook)
-    app = pathlib.Path(__file__).resolve().parent.parent.joinpath('app.js').read_text(encoding='utf-8')
-    assert "const ORDER_URL = '';" in app or 'const ORDER_URL =' in app
-    import re as _re
-    pg.route('**/app.js', lambda r: r.fulfill(content_type='application/javascript', body=_re.sub(r"const ORDER_URL = '[^']*';", "const ORDER_URL = 'https://relay.test/';", app)))
+    pg.route('https://pokemmo-orders-relay.cassnadra.workers.dev/**', hook)   # (the real relay's address, answered here)
+    # a stand-in for Cloudflare's Turnstile script: execute() hands back a token
+    TS = ("window.turnstile = { _cb: null, render(el, o) { this._cb = o.callback; return 'w1'; }, reset() {},"
+          " execute() { setTimeout(() => this._cb('stub-token'), 20); } };")
+    pg.route('https://challenges.cloudflare.com/**', lambda r: r.fulfill(content_type='application/javascript', body=TS))
+    pg.on('console', lambda m: errors.append('console: ' + m.text) if 'Content Security Policy' in m.text else None)
+    # a tampered saved draft (as another page on cassnadra.github.io could leave): cleaned before use
+    pg.add_init_script('''if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');
+      localStorage.setItem('order', JSON.stringify([{ id: 25, qty: 'x', from: 1, to: 100,
+        evs: ['"><img src=x onerror=window.pwned=1>', 0, 0, 0, 0, 0], moves: ['Spore', '<b>x</b>'] }, { id: 99999 }])); }''')
     pg.goto(url); pg.wait_for_load_state('networkidle')
 
+    ok(pg.locator('#items tr').count() == 1 and not pg.evaluate('window.pwned'), 'a tampered draft: cleaned (1 Pikachu, no injected code)')
+    pg.locator('#items tr').first.locator('button', has_text='Edit').click()
+    ok(pg.input_value('#qty') == '1' and pg.inner_text('#evStr') == 'none' and not pg.locator('#moves input:checked').count(), 'its bad quantity / EVs / moves reset')
+    pg.click('#removeBtn')
     ok(pg.locator('#grid .slot').count() == 60, 'an empty 60-slot box')
     add(pg, 'pikachu')
     ok(pg.inner_text('#edName') == '#25 Pikachu', 'search + add Pikachu')
@@ -92,13 +101,14 @@ with sync_playwright() as p:
     ok(not pg.is_disabled('#submit'), 'ready to send')
     pg.screenshot(path=os.path.join(out, 'ready.png'), full_page=True)
     pg.click('#submit'); pg.wait_for_selector('.status.ok')
-    ok(len(sent) == 1, 'one webhook post')
+    ok(len(sent) == 1, 'one order sent to the relay')
     if sent:
-        e = sent[0]['embeds'][0]
-        print(json.dumps(sent[0], indent=1, ensure_ascii=False))
-        ok(sent[0]['allowed_mentions'] == {'parse': []}, 'no pings')
-        ok('<t:%d:F>' % int(start.replace(second=0, microsecond=0).timestamp()) in json.dumps(e), 'Discord timestamp for the start')
-        ok(len(json.dumps(e)) < 6000, 'embed within Discord limits')
+        o = sent[0]
+        print(json.dumps(o, indent=1, ensure_ascii=False))
+        ok(set(o) == {'items', 'when', 'contact', 'who', 'notes', 'shown', 'turnstile'} and 'embeds' not in o, 'only the order itself, no message text')
+        ok(all(set(i) == {'uid', 'qty', 'from', 'to', 'evs', 'moves'} for i in o['items']), 'no prices or groups in the items')
+        ok(o['turnstile'] == 'stub-token', 'with a bot check token')
+        ok(o['when']['type'] == 'range' and o['when']['start'] == int(start.replace(second=0, microsecond=0).timestamp()), 'the time range as Unix time')
     ok(pg.locator('#items tr').count() == 0 and pg.locator('#grid button.slot').count() == 0, 'order cleared after sending')
     ok(pg.inner_text('#status') == 'Order sent! I will contact you soon.', 'sent message')
 

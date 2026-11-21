@@ -1,6 +1,9 @@
 // Leveling order page: add Pokémon to your box, set each species up, send the order to Discord.
 // Orders go to the relay (relay/worker.js, a Cloudflare Worker) which holds the Discord webhook - never put the webhook here.
+// The page only says WHAT is ordered; the relay checks it and works out the prices itself (prices here are for show).
 const ORDER_URL = 'https://pokemmo-orders-relay.cassnadra.workers.dev/';   // the relay (relay/worker.js on Cloudflare)
+const TURNSTILE_SITEKEY = '0x4AAAAAAGLeSbSbBjB4e7Eq';                     // Cloudflare's invisible bot check (the relay needs its token)
+if (window.top !== window.self) document.documentElement.hidden = true;     // (not inside another site's frame)
 const EV_PRICE = 20000;        // ¥ per Pokémon with any EVs (leveling: 0.17 ¥ per exp, in unitPrice)
 const BOX = 60;                // a PokeMMO box: up to 60 shown one by one, more collapse into one stack per species
 const MAX_SPECIES = 20, MAX_QTY = 60, COOLDOWN_MS = 60000;
@@ -15,7 +18,20 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 
 let items = [];               // one per species: {id, qty, from, to, evs: [6], moves: [names]}
 let sel = 0;                  // the species selected in the box (0 = none)
-try { items = JSON.parse(localStorage.getItem('order') || '[]').filter(i => byId.has(i.id)); } catch { items = []; }
+const isInt = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+function cleanDraft(raw) {
+  const seen = new Set(), out = [];
+  for (const i of Array.isArray(raw) ? raw : []) {
+    if (!i || !byId.has(i.id) || seen.has(i.id) || out.length >= MAX_SPECIES) continue;
+    const s = byId.get(i.id), names = new Set(s.moves.map(m => m[1]));
+    const evs = Array.isArray(i.evs) && i.evs.length === 6 && i.evs.every(v => isInt(v, 0, 252)) && i.evs.reduce((a, b) => a + b, 0) <= 510 ? i.evs : [0, 0, 0, 0, 0, 0];
+    seen.add(i.id);
+    out.push({ id: i.id, qty: isInt(i.qty, 1, MAX_QTY) ? i.qty : 1, from: isInt(i.from, 1, 100) ? i.from : 1, to: isInt(i.to, 1, 100) ? i.to : 100, evs,
+               moves: (Array.isArray(i.moves) ? i.moves : []).filter((m, k, a) => typeof m === 'string' && names.has(m) && a.indexOf(m) === k).slice(0, 4) });
+  }
+  return out;
+}
+try { items = cleanDraft(JSON.parse(localStorage.getItem('order') || '[]')); } catch { items = []; }
 const saveDraft = () => { try { localStorage.setItem('order', JSON.stringify(items)); } catch {} };
 const item = id => items.find(i => i.id === id);
 
@@ -222,34 +238,29 @@ function checkReady() {
 }
 
 // ---- sending
-const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
-function localRange(a, b) {
-  const f = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
-  return `${f.format(a)} – ${f.format(b)} (${tz})`;
+function order() {
+  let w = { type: 'soon' };
+  if (when() === 'range') w = { type: 'range', start: Math.floor(new Date($('tFrom').value) / 1000), end: Math.floor(new Date($('tTo').value) / 1000), tz };
+  return { items: items.map(it => ({ uid: it.id, qty: it.qty, from: it.from, to: it.to, evs: it.evs, moves: it.moves })),
+           when: w, contact: contact(), who: $('who').value.trim(), notes: $('notes').value.trim(), shown: total() };
 }
-function payload() {
-  const lines = items.map((it, i) => {
-    const s = byId.get(it.id);
-    return `**${i + 1}. ${s.name}** ×${it.qty} — *${s.group}* — ${yen(unitPrice(it))} each = **${yen(linePrice(it))}**\n　${itemDetail(it)}`;
+// ---- the bot check (Cloudflare Turnstile, invisible): a fresh token for each order
+let tsWidget = null, tsWaiting = null;
+(function tsInit() {
+  if (!TURNSTILE_SITEKEY) return;
+  if (!window.turnstile) return void setTimeout(tsInit, 200);
+  tsWidget = turnstile.render('#turnstile', { sitekey: TURNSTILE_SITEKEY, execution: 'execute', appearance: 'interaction-only',
+    callback: t => { if (tsWaiting) { tsWaiting.ok(t); tsWaiting = null; } },
+    'error-callback': () => { if (tsWaiting) { tsWaiting.no(new Error('the bot check failed')); tsWaiting = null; } } });
+})();
+function botToken() {
+  if (!TURNSTILE_SITEKEY) return Promise.resolve('');
+  if (tsWidget === null) return Promise.reject(new Error("the bot check didn't load - reload the page"));
+  return new Promise((ok, no) => {
+    tsWaiting = { ok, no };
+    turnstile.reset(tsWidget); turnstile.execute(tsWidget);
+    setTimeout(() => { if (tsWaiting) { tsWaiting = null; no(new Error('the bot check timed out')); } }, 30000);
   });
-  let meet = 'Within a few hours';
-  if (when() === 'range') {
-    const a = new Date($('tFrom').value), b = new Date($('tTo').value), ua = Math.floor(a / 1000), ub = Math.floor(b / 1000);
-    meet = `<t:${ua}:F> → <t:${ub}:F> (starts <t:${ua}:R>)\nTheir time: ${localRange(a, b)}`;   // (Discord shows <t:..> in your own time)
-  }
-  const notes = $('notes').value.trim();
-  const fields = [
-    { name: 'Total', value: yen(total()), inline: true },
-    { name: 'Contact', value: clip(`${contact()}: ${$('who').value.trim()}`, 200), inline: true },
-    { name: 'Meet', value: meet },
-  ];
-  if (notes) fields.push({ name: 'Notes', value: clip(notes, 1000) });
-  return {
-    username: 'Leveling Orders',
-    allowed_mentions: { parse: [] },          // (nothing a customer types can ping anyone)
-    embeds: [{ title: `New order: ${count()} Pokémon, ${yen(total())}`, description: clip(lines.join('\n'), 4000),
-               color: 0xf0c020, fields, timestamp: new Date().toISOString() }],
-  };
 }
 $('submit').onclick = async () => {
   if (problem()) return;
@@ -258,9 +269,9 @@ $('submit').onclick = async () => {
   sending = true; status('Sending...'); checkReady();
   try {
     if (!ORDER_URL) throw new Error('ordering is not switched on yet');
-    const r = await fetch(ORDER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload()) });
-    if (r.status === 429) throw new Error('one order a minute');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const body = { ...order(), turnstile: await botToken() };
+    const r = await fetch(ORDER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error((await r.text().catch(() => '')).slice(0, 120) || 'HTTP ' + r.status);
     try { localStorage.setItem('lastOrder', String(Date.now())); } catch {}
     items = []; sel = 0; $('confirm').checked = false; $('notes').value = '';
     sending = false; changed(true);

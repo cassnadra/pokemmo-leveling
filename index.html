@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; img-src 'self' https://raw.githubusercontent.com; connect-src https://pokemmo-orders-relay.cassnadra.workers.dev; frame-src https://challenges.cloudflare.com; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Leveling Orders</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -112,6 +114,7 @@
         </fieldset>
 
         <label class="confirm"><input id="confirm" type="checkbox"> I have confirmed all of the selections are correct</label>
+        <div id="turnstile"></div>
         <div class="center"><button id="submit" class="big" disabled>Place Order</button></div>
         <p id="status" class="status" role="status"></p>
       </div>
@@ -120,6 +123,7 @@
 </div>
 </div>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>
