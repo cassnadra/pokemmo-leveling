@@ -1,0 +1,96 @@
+/* early-2000s look: Verdana, blue title bars, grey bevelled buttons */
+* { box-sizing: border-box; }
+body { margin: 0; background: #c9d3e2; font: 11px/1.45 Verdana, Tahoma, Geneva, sans-serif; color: #000; }
+#page { max-width: 980px; margin: 10px auto; background: #fff; border: 1px solid #5a6f8f; }
+#banner { background: #2b4a7a; background: linear-gradient(#3d63a0, #22406e); color: #fff; padding: 10px 12px; border-bottom: 3px solid #f0c020; }
+#banner h1 { margin: 0; font: bold 22px/1.2 "Trebuchet MS", Verdana, sans-serif; letter-spacing: 1px; text-shadow: 1px 1px 0 #000; }
+.rates { margin-top: 3px; color: #dde6f5; }
+.rates b { color: #ffe680; }
+#cols { display: flex; gap: 8px; padding: 8px; align-items: flex-start; }
+#left { flex: 1.45; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+#right { flex: 1; min-width: 0; }
+@media (max-width: 760px) { #cols { flex-direction: column; } #left, #right { width: 100%; } #page { margin: 0; border: 0; } }
+#footer { text-align: center; color: #666; font-size: 10px; padding: 6px; border-top: 1px solid #ccc; background: #f2f2f2; }
+
+.panel { border: 1px solid #5a6f8f; background: #f4f6fa; }
+.bar { background: #4a6fa5; background: linear-gradient(#6a8fc5, #3c5f94); color: #fff; font-weight: bold; padding: 3px 6px; border-bottom: 1px solid #2c4a75; }
+.barinfo { float: right; font-weight: normal; }
+.body { padding: 7px; }
+.small { font-size: 10px; color: #555; }
+.empty { color: #666; text-align: center; margin: 8px 0; font-style: italic; }
+.center { text-align: center; }
+
+input, textarea, button, select { font: 11px Verdana, Tahoma, sans-serif; color: #000; }
+input[type=text], input[type=number], input[type=datetime-local], textarea {
+  border: 2px inset #c8c8c8; background: #fff; padding: 2px 3px; }
+input[type=number] { width: 46px; }
+#search, #who, textarea { width: 100%; }
+button { background: #e4e4e4; border: 2px outset #f4f4f4; padding: 2px 8px; cursor: pointer; }
+button:active:not(:disabled) { border-style: inset; }
+button:disabled { color: #999; cursor: default; }
+button.big { font-size: 13px; font-weight: bold; padding: 4px 22px; margin-top: 8px; }
+fieldset { border: 1px solid #9aa8bf; margin: 6px 0; padding: 4px 7px 7px; background: #fff; }
+legend { font-weight: bold; color: #22406e; padding: 0 3px; }
+
+/* search results */
+.results { margin-top: 5px; max-height: 196px; overflow-y: auto; border: 1px solid #9aa8bf; background: #fff; }
+.results:empty { display: none; }
+.res { display: flex; align-items: center; gap: 6px; padding: 1px 4px; cursor: pointer; border-bottom: 1px dotted #ccd; }
+.res:hover, .res:focus { background: #ffe680; outline: none; }
+.res img { width: 32px; height: 32px; image-rendering: pixelated; }
+.res .g { margin-left: auto; color: #666; font-size: 10px; }
+.res .in { color: #2a7a2a; font-size: 10px; }
+
+/* the box: 60 slots like PokeMMO's */
+.grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 2px; padding: 4px;
+  background: #7fa8d8; border: 2px inset #9bb8dc; }
+.slot { position: relative; aspect-ratio: 1; padding: 0; background: #b9d0ec; border: 1px solid #8fb0d8; display: flex; align-items: center; justify-content: center; }
+button.slot { cursor: pointer; }
+button.slot:hover { background: #d6e5f6; }
+.slot.sel { background: #fff3a8; border: 2px solid #f0b000; }
+.slot img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.slot .badge { position: absolute; right: 0; bottom: 0; background: #22406e; color: #fff; font-size: 9px; font-weight: bold; padding: 0 2px; }
+#boxHint { margin-top: 4px; }
+
+/* editor */
+.ed-head { width: 100%; border-collapse: collapse; }
+.ed-head td { vertical-align: middle; padding: 0 4px; }
+.ed-head .spr { width: 72px; }
+.ed-head img { width: 64px; height: 64px; image-rendering: pixelated; border: 1px solid #9aa8bf; background: #e8eef7; display: block; }
+.name { font: bold 15px "Trebuchet MS", Verdana, sans-serif; color: #22406e; }
+.qty { text-align: center; white-space: nowrap; width: 1%; font-weight: bold; }
+.qty input { width: 40px; height: 26px; text-align: center; font-size: 13px; font-weight: bold; vertical-align: middle; -moz-appearance: textfield; }
+.qty input::-webkit-inner-spin-button { display: none; }
+button.step { width: 26px; height: 26px; padding: 0; font-size: 15px; font-weight: bold; vertical-align: middle; }
+.ed-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 8px; }
+.ed-cols .mvbox { grid-column: 2; grid-row: 1 / span 2; }
+@media (max-width: 520px) { .ed-cols { grid-template-columns: minmax(0, 1fr); } .ed-cols .mvbox { grid-column: auto; grid-row: auto; } }
+.evstr { font-family: "Courier New", monospace; font-weight: bold; color: #a03000; margin-bottom: 3px; }
+.ev { display: grid; grid-template-columns: 30px minmax(0, 1fr) 46px; gap: 4px; align-items: center; }
+.ev input[type=range] { width: 100%; margin: 2px 0; accent-color: #3c5f94; }
+input[type=checkbox], input[type=radio] { accent-color: #3c5f94; }
+.moves { max-height: 250px; overflow-y: auto; }
+.moves label { display: flex; gap: 5px; align-items: center; padding: 1px 0; cursor: pointer; }
+.moves label.off { color: #aaa; cursor: default; }
+.moves .lv { color: #666; width: 40px; flex: none; font-size: 10px; }
+.ed-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #9aa8bf; }
+.ed-foot b, .total b { color: #a03000; }
+
+/* order */
+.total { font-size: 13px; padding: 4px 6px; background: #fff7d0; border: 1px solid #e0c050; margin: 4px 0; }
+.items { width: 100%; border-collapse: collapse; margin: 4px 0; }
+.items td { border-bottom: 1px solid #d0d6e0; padding: 3px 2px; vertical-align: top; }
+.items tr:nth-child(odd) td { background: #eef2f8; }
+.items tr.sel td { background: #fff3a8; }
+.items img { width: 32px; height: 32px; image-rendering: pixelated; }
+.items .t { font-weight: bold; }
+.items .d { color: #555; font-size: 10px; overflow-wrap: anywhere; }
+.items .acts { white-space: nowrap; text-align: right; }
+.items .acts button { font-size: 10px; padding: 0 4px; display: block; margin: 0 0 2px auto; }
+.opt { display: block; margin: 2px 0; cursor: pointer; }
+.range { margin: 4px 0 0 20px; }
+.range label { display: block; margin: 2px 0; }
+.confirm { display: block; margin-top: 8px; padding: 5px; background: #ffd6d6; border: 1px solid #c00000; font-weight: bold; color: #800000; cursor: pointer; }
+.status { min-height: 1.4em; margin: 6px 0 0; text-align: center; font-weight: bold; }
+.status.err { color: #c00000; }
+.status.ok { color: #1a7a1a; }

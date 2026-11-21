@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leveling Orders</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="page">
+<div id="banner">
+  <h1>Leveling Orders</h1>
+  <div class="rates">Leveling: <b>0.17 &yen; per exp</b> &nbsp;|&nbsp; EV training: <b>20,000 &yen; per Pok&eacute;mon</b> &nbsp;|&nbsp; Prices are fixed.</div>
+</div>
+
+<div id="cols">
+  <div id="left">
+    <div class="panel">
+      <div class="bar">Add Pok&eacute;mon</div>
+      <div class="body">
+        <input id="search" type="text" placeholder="Type a name or Pok&eacute;dex number..." autocomplete="off">
+        <div id="results" class="results"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="bar">Your box <span id="boxInfo" class="barinfo"></span></div>
+      <div class="body">
+        <div id="grid" class="grid"></div>
+        <div class="small" id="boxHint">Click a Pok&eacute;mon in your box to change it.</div>
+      </div>
+    </div>
+
+    <div class="panel" id="editor">
+      <div class="bar">Selected Pok&eacute;mon</div>
+      <div class="body">
+        <p class="empty" id="editorEmpty">Nothing selected. Add a Pok&eacute;mon above, or click one in your box.</p>
+        <div id="editorBody" hidden>
+          <table class="ed-head"><tr>
+            <td class="spr"><img id="edSprite" alt=""></td>
+            <td>
+              <div id="edName" class="name"></div>
+              <div class="small">Exp group: <b id="edGroup"></b></div>
+            </td>
+            <td class="qty">
+              Quantity<br>
+              <button id="qtyMinus" class="step" aria-label="One fewer">&minus;</button><input id="qty" type="number" min="1" max="60" value="1" aria-label="Quantity"><button id="qtyPlus" class="step" aria-label="One more">+</button>
+            </td>
+          </tr></table>
+
+          <div class="ed-cols">
+            <fieldset>
+              <legend>Level</legend>
+              From <input id="lvFrom" type="number" min="1" max="99" value="1">
+              to <input id="lvTo" type="number" min="2" max="100" value="100">
+              <div class="small" id="expLine"></div>
+            </fieldset>
+            <fieldset class="evbox">
+              <legend>EVs <span id="evTotal"></span></legend>
+              <div class="evstr" id="evStr">none</div>
+              <div id="evs"></div>
+            </fieldset>
+            <fieldset class="mvbox">
+              <legend>Level-up moves (up to 4)</legend>
+              <div id="moves" class="moves"></div>
+            </fieldset>
+          </div>
+
+          <div class="ed-foot">
+            <span>Each: <b id="unitPrice">0 &yen;</b> &nbsp; This species: <b id="linePrice">0 &yen;</b></span>
+            <button id="removeBtn">Remove from order</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="panel">
+      <div class="bar">Your order</div>
+      <div class="body">
+        <div class="total">Order total: <b class="orderTotal">0 &yen;</b></div>
+        <table id="items" class="items"></table>
+        <p class="empty" id="itemsEmpty">Nothing in your order yet.</p>
+
+        <fieldset>
+          <legend>When can you meet?</legend>
+          <label class="opt"><input type="radio" name="when" value="soon" checked> Within a few hours</label>
+          <label class="opt"><input type="radio" name="when" value="range"> A time range (your local time)</label>
+          <div id="rangeBox" class="range" hidden>
+            <label>From <input id="tFrom" type="datetime-local"></label>
+            <label>To <input id="tTo" type="datetime-local"></label>
+            <div class="small" id="tzNote"></div>
+          </div>
+        </fieldset>
+
+        <div class="total">Order total: <b class="orderTotal">0 &yen;</b></div>
+
+        <fieldset>
+          <legend>How should I contact you?</legend>
+          <label class="opt"><input type="radio" name="contact" value="Discord" checked> Discord</label>
+          <label class="opt"><input type="radio" name="contact" value="In-game mail"> In-game mail</label>
+          <input id="who" type="text" maxlength="40" placeholder="Your Discord username">
+        </fieldset>
+
+        <fieldset>
+          <legend>Notes</legend>
+          <textarea id="notes" maxlength="800" rows="3" placeholder="Anything else (optional)"></textarea>
+        </fieldset>
+
+        <label class="confirm"><input id="confirm" type="checkbox"> I have confirmed all of the selections are correct</label>
+        <div class="center"><button id="submit" class="big" disabled>Place Order</button></div>
+        <p id="status" class="status" role="status"></p>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="footer">Prices are fixed &mdash; no haggling. Best viewed at 1024&times;768.</div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
