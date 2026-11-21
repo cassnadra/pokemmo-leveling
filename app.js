@@ -160,7 +160,7 @@ function drawOrder() {
     const s = byId.get(it.id), tr = document.createElement('tr');
     if (it.id === sel) tr.className = 'sel';
     tr.innerHTML = `<td><img alt="" src="${sprite(s.img)}"></td><td><div class="t">Item ${i + 1}: ${yen(linePrice(it))}</div>
-      <div>${it.qty} &times; ${s.name} <span class="small">(${yen(unitPrice(it))} each, ${s.group})</span></div>
+      <div>${it.qty} &times; ${s.name} <span class="small">(${yen(unitPrice(it))} each)</span></div>
       <div class="d">${esc(itemDetail(it))}</div></td>
       <td class="acts"><button data-a="e">Edit</button><button data-a="r">Remove</button></td>`;
     tr.querySelector('[data-a=e]').onclick = () => { select(it.id); $('editor').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
