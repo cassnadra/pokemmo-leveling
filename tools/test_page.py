@@ -60,6 +60,15 @@ with sync_playwright() as p:
     want = 570000 + (1250000 - 10000) * 17 // 100   # Slow: Lv 20 = 10,000 exp
     ok(pg.locator('.orderTotal').first.inner_text() == f'{want:,} ¥', 'order total ' + pg.locator('.orderTotal').first.inner_text())
     ok(pg.locator('.orderTotal').count() == 2, 'total shown twice')
+    # Lv 20 -> 20: EV-only - needs EVs, then costs just the EV fee
+    pg.fill('#lvTo', '20'); pg.dispatch_event('#lvTo', 'input')
+    ok('EV training only' in pg.inner_text('#expLine') and 'Magikarp' in pg.inner_text('#status'), 'same level, no EVs: blocked')
+    n = pg.locator('#evs input[type=number]').nth(5); n.fill('252'); n.dispatch_event('change')
+    ok(pg.inner_text('#unitPrice') == '20,000 ¥' and 'EVs only' in pg.inner_text('#items'), 'same level + EVs: an EV-only order, 20,000')
+    pg.fill('#lvTo', '10'); pg.dispatch_event('#lvTo', 'input')
+    ok('below' in pg.inner_text('#expLine'), 'target below start: blocked')
+    n.fill('0'); n.dispatch_event('change')
+    pg.fill('#lvTo', '100'); pg.dispatch_event('#lvTo', 'input')
     pg.screenshot(path=os.path.join(out, 'editor.png'), full_page=True)
 
     # back to Pikachu from the box: the editor shows its setup

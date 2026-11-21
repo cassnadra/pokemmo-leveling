@@ -21,6 +21,12 @@ const item = id => items.find(i => i.id === id);
 
 // ---- pricing
 const evTotal = evs => evs.reduce((a, b) => a + b, 0);
+// what's wrong with a line's levels ('' = fine): the same level twice is an EV-only order, so it needs EVs
+function levelError(it) {
+  if (it.to < it.from) return 'The target level can\'t be below the starting level.';
+  if (it.to === it.from && !evTotal(it.evs)) return 'Same level: EV training only - set some EVs, or raise the target level.';
+  return '';
+}
 function expNeeded(it) { const t = EXP[byId.get(it.id).group]; return Math.max(0, t[it.to] - t[it.from]); }
 function unitPrice(it) { return Math.ceil(expNeeded(it) * 17 / 100) + (evTotal(it.evs) > 0 ? EV_PRICE : 0); }   // (in whole numbers: 0.17 as a float rounded 210,800 up to 210,801)
 const linePrice = it => unitPrice(it) * it.qty;
@@ -123,8 +129,7 @@ function refreshEditor() {
     const b = l.querySelector('input'), off = full && !b.checked;
     b.disabled = off; l.classList.toggle('off', off);
   });
-  $('expLine').textContent = it.to <= it.from ? 'The target level must be above the starting level.'
-    : `${expNeeded(it).toLocaleString('en-US')} exp each`;
+  $('expLine').textContent = levelError(it) || (it.to === it.from ? 'No leveling: EV training only.' : `${expNeeded(it).toLocaleString('en-US')} exp each`);
   $('unitPrice').textContent = yen(unitPrice(it));
   $('linePrice').textContent = yen(linePrice(it));
   $('qtyMinus').disabled = it.qty <= 1; $('qtyPlus').disabled = it.qty >= MAX_QTY;
@@ -136,8 +141,8 @@ $('qtyMinus').onclick = () => { setQty(item(sel).qty - 1); $('qty').value = item
 $('qtyPlus').onclick = () => { setQty(item(sel).qty + 1); $('qty').value = item(sel).qty; };
 function setLevels() {
   const it = item(sel); if (!it) return;
-  it.from = Math.max(1, Math.min(99, Math.floor(+$('lvFrom').value || 1)));
-  it.to = Math.max(2, Math.min(100, Math.floor(+$('lvTo').value || 100)));
+  it.from = Math.max(1, Math.min(100, Math.floor(+$('lvFrom').value || 1)));
+  it.to = Math.max(1, Math.min(100, Math.floor(+$('lvTo').value || 100)));
   changed();
 }
 ['lvFrom', 'lvTo'].forEach(k => { $(k).oninput = setLevels; $(k).onchange = () => { const it = item(sel); if (it) { $('lvFrom').value = it.from; $('lvTo').value = it.to; } }; });
@@ -150,7 +155,7 @@ $('removeBtn').onclick = () => remove(sel);
 
 // ---- the order
 function itemDetail(it) {
-  const parts = [`Lv ${it.from} → ${it.to}`, `EVs ${evString(it.evs)}`];
+  const parts = [it.to === it.from ? `Lv ${it.from} (EVs only)` : `Lv ${it.from} → ${it.to}`, `EVs ${evString(it.evs)}`];
   if (it.moves.length) parts.push('Moves: ' + it.moves.join(', '));
   return parts.join(' · ');
 }
@@ -201,8 +206,8 @@ function rangeError() {
 }
 function problem() {
   if (!items.length) return 'Add at least one Pokémon to your order.';
-  const bad = items.find(i => i.to <= i.from);
-  if (bad) return `${byId.get(bad.id).name}: the target level must be above the starting level.`;
+  const bad = items.find(i => levelError(i));
+  if (bad) return `${byId.get(bad.id).name}: ${levelError(bad)}`;
   const r = rangeError(); if (r) return r;
   if (!$('who').value.trim()) return contact() === 'Discord' ? 'Enter your Discord username.' : 'Enter your in-game name.';
   if (!$('confirm').checked) return 'Tick the box to confirm your order.';
