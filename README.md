@@ -1,7 +1,7 @@
 # PokeMMO leveling orders
 
 A one-page order form (GitHub Pages): customers add Pokémon to a box, set the levels, EVs and level-up moves per
-species, pick a meeting time and contact method, and the order arrives in Discord. Prices are fixed:
+species, pick a meeting time and contact method, and the order arrives in Discord. Prices:
 0.17 ¥ per exp, 20,000 ¥ per Pokémon with EVs.
 
 ## Files

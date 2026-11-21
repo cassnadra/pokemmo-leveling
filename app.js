@@ -102,7 +102,7 @@ function drawEditor() {
   if (!s.moves.length) mv.innerHTML = '<p class="empty">No level-up moves.</p>';
   s.moves.forEach(([lvs, name]) => {
     const l = document.createElement('label');
-    l.innerHTML = `<input type="checkbox"><span class="lv">Lv ${lvs.join(', ')}</span><span>${name}</span>`;
+    l.innerHTML = `<input type="checkbox"><span class="mn">${name}</span><span class="lv">Lv ${lvs.join(', ')}</span>`;
     const box = l.querySelector('input');
     box.checked = it.moves.includes(name);
     box.onchange = () => {
