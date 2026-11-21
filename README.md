@@ -21,7 +21,19 @@ species, pick a meeting time and contact method, and the order arrives in Discor
    Add a second one: type Text, name `ALLOWED_ORIGIN`, value `https://cassnadra.github.io`.
 4. Copy the worker's address into `ORDER_URL` in `app.js` (now: https://pokemmo-orders-relay.cassnadra.workers.dev/).
 
-Test the relay: `node relay/worker_test.mjs` (Discord stubbed out).
+## Security
+
+- The page sends only what is ordered (Pokémon, levels, EVs, moves, time, contact, notes). The relay checks it against
+  its own copy of the data (`relay/data.js`, written by `tools/make_data.py`), works out every price, and writes the
+  Discord message itself. A faked price on the page shows up as "⚠ Price mismatch" with the real total.
+- The customer's name and notes lose Discord markdown, links, mentions and timestamps; nothing can ping.
+- Every order needs Cloudflare Turnstile (invisible bot check; secret `TURNSTILE_SECRET` on the relay).
+- One order a minute per address, at most 10 a minute per relay instance.
+- The page: a Content-Security-Policy (scripts only from this site and Cloudflare's bot check, sends only to the relay),
+  it won't show inside another site's frame, and a saved draft is checked before it's used.
+- If the relay is ever abused anyway: make a new Discord webhook and replace the relay's `WEBHOOK_URL` secret.
+
+Tests: `node relay/worker_test.mjs` (tampering, injection, limits, bot check) and `tools/test_page.py`.
 
 ## Where the data comes from
 
