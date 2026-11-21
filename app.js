@@ -1,6 +1,6 @@
 // Leveling order page: add Pokémon to your box, set each species up, send the order to Discord.
 // Orders go to the relay (relay/worker.js, a Cloudflare Worker) which holds the Discord webhook - never put the webhook here.
-const ORDER_URL = '';   // e.g. 'https://pokemmo-orders-relay.NAME.workers.dev' (empty: ordering is off)
+const ORDER_URL = 'https://pokemmo-orders-relay.cassnadra.workers.dev/';   // the relay (relay/worker.js on Cloudflare)
 const EV_PRICE = 20000;        // ¥ per Pokémon with any EVs (leveling: 0.17 ¥ per exp, in unitPrice)
 const BOX = 60;                // a PokeMMO box: up to 60 shown one by one, more collapse into one stack per species
 const MAX_SPECIES = 20, MAX_QTY = 60, COOLDOWN_MS = 60000;

@@ -19,7 +19,7 @@ species, pick a meeting time and contact method, and the order arrives in Discor
 2. Edit code: replace everything with `relay/worker.js` -> Deploy.
 3. Settings -> Variables and Secrets -> Add: type Secret, name `WEBHOOK_URL`, value your Discord webhook URL.
    Add a second one: type Text, name `ALLOWED_ORIGIN`, value `https://cassnadra.github.io`.
-4. Copy the worker's address (`https://pokemmo-orders-relay.<you>.workers.dev`) into `ORDER_URL` in `app.js`.
+4. Copy the worker's address into `ORDER_URL` in `app.js` (now: https://pokemmo-orders-relay.cassnadra.workers.dev/).
 
 Test the relay: `node relay/worker_test.mjs` (Discord stubbed out).
 
