@@ -54,11 +54,13 @@ function check(o, now) {
     try { new Intl.DateTimeFormat('en-GB', { timeZone: tz }); } catch { tz = ''; }
     when = { type: 'range', start, end, tz };
   } else return 'bad time';
-  const name = v => typeof v === 'string' && v.trim() && v.length <= 200;
-  if (!name(o.ign)) return 'bad in-game name';
-  if (!name(o.discord)) return 'bad Discord username';
+  // names never refuse an order (an old cached page sends {contact, who} instead): shown as given, or '(not given)'
+  const str = v => typeof v === 'string' ? v.slice(0, 400) : '';
+  let ign = str(o.ign), discord = str(o.discord);
+  if (!ign.trim() && !discord.trim() && str(o.who).trim()) (o.contact === 'In-game mail' ? (ign = str(o.who)) : (discord = str(o.who)));
+  const named = v => plain(v, MAX_WHO) || '(not given)';
   if (o.notes != null && (typeof o.notes !== 'string' || o.notes.length > 4000)) return 'bad notes';
-  return { items, when, ign: plain(o.ign, MAX_WHO), discord: plain(o.discord, MAX_WHO), notes: plain(o.notes || '', MAX_NOTES, true),
+  return { items, when, ign: named(ign), discord: named(discord), notes: plain(o.notes || '', MAX_NOTES, true),
            shown: Number.isSafeInteger(o.shown) ? o.shown : null };
 }
 

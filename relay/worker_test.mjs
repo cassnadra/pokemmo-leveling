@@ -57,7 +57,12 @@ await bad([{ uid: 25, qty: 1, from: 50, to: 10, evs: [0, 0, 0, 0, 0, 0], moves: 
 await bad([{ uid: 25, qty: 1, from: 5, to: 5, evs: [0, 0, 0, 0, 0, 0], moves: [] }], 'same level without EVs refused');
 await bad(Array.from({ length: 21 }, (_, i) => ({ uid: i + 1, qty: 1, from: 1, to: 2, evs: [0, 0, 0, 0, 0, 0], moves: [] })), 'over 20 species refused');
 ok((await send(order({ when: { type: 'range', start: 100, end: 200 } }))).r.status === 400, 'a time range in the past refused');
-ok((await send(order({ ign: '  ' }))).r.status === 400 && (await send(order({ discord: undefined }))).r.status === 400, 'a missing in-game name or Discord username refused');
+({ p } = await send(order({ ign: '  ', discord: undefined })));
+ok(p && p.embeds[0].fields[1].value === '(not given)' && p.embeds[0].fields[2].value === '(not given)', 'missing names: still sent, marked (not given)');
+({ p } = await send(order({ ign: undefined, discord: undefined, contact: 'In-game mail', who: 'OldPage' })));
+ok(p && p.embeds[0].fields[1].value === 'OldPage' && p.embeds[0].fields[2].value === '(not given)', 'an old cached page (contact + who): still sent');
+({ p } = await send(order({ ign: 42, discord: 'x'.repeat(5000) })));
+ok(p && p.embeds[0].fields[1].value === '(not given)' && p.embeds[0].fields[2].value.length === 40, 'odd names: never refused');
 
 // injection through what a customer types
 ({ p } = await send(order({ discord: '@everyone <@&123> [click](https://evil.example)', notes: '**PAID IN FULL** <t:0:F> https://evil.example\n\n\n\n#hdr' })));
