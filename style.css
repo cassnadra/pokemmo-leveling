@@ -43,7 +43,7 @@ input[type=text], input[type=number], input[type=datetime-local], textarea {
 input:focus, textarea:focus { outline: 1px solid #e0b020; }
 input[type=number] { width: 60px; }
 input[type=datetime-local] { color-scheme: dark; }
-#search, #who, textarea { width: 100%; }
+#search, textarea { width: 100%; }
 #search { font-size: 14px; padding: 7px 9px; }
 button { cursor: pointer; color: #fff; padding: 3px 11px; border: 1px solid #142846; border-radius: 3px; text-shadow: 0 1px 0 #10203a;
   background: linear-gradient(#6d91c9 0%, #4a6fa8 49%, #3c5f97 50%, #34548a 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3); }
@@ -117,6 +117,8 @@ button.step { width: 32px; height: 32px; padding: 0; font-size: 18px; font-weigh
 .items .acts { white-space: nowrap; text-align: right; }
 .items .acts button { font-size: 11px; padding: 1px 7px; display: block; margin: 0 0 3px auto; }
 .opt { display: block; margin: 3px 0; cursor: pointer; }
+.ids { display: block; margin: 3px 0 7px; }
+.ids input { display: block; width: 100%; margin-top: 2px; }
 .range { margin: 6px 0 0 22px; }
 .range label { display: block; margin: 4px 0; }
 .confirm { display: block; margin-top: 10px; padding: 8px; background: #3a1418; border: 1px solid #b8343c; font-weight: bold; color: #ffb3b3; cursor: pointer; }

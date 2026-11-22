@@ -200,16 +200,12 @@ function changed(full) {
   drawBox(); drawOrder();
 }
 
-// ---- meeting time + contact
+// ---- meeting time + names
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 $('tzNote').textContent = `Your time zone: ${tz}`;
 const when = () => document.querySelector('input[name=when]:checked').value;
-const contact = () => document.querySelector('input[name=contact]:checked').value;
 document.querySelectorAll('input[name=when]').forEach(r => r.onchange = () => { $('rangeBox').hidden = when() !== 'range'; checkReady(); });
-document.querySelectorAll('input[name=contact]').forEach(r => r.onchange = () => {
-  $('who').placeholder = contact() === 'Discord' ? 'Your Discord username' : 'Your in-game name'; checkReady();
-});
-['tFrom', 'tTo', 'who', 'notes'].forEach(k => $(k).oninput = checkReady);
+['tFrom', 'tTo', 'ign', 'discord', 'notes'].forEach(k => $(k).oninput = checkReady);
 $('confirm').onchange = checkReady;
 
 function rangeError() {
@@ -225,7 +221,8 @@ function problem() {
   const bad = items.find(i => levelError(i));
   if (bad) return `${byId.get(bad.id).name}: ${levelError(bad)}`;
   const r = rangeError(); if (r) return r;
-  if (!$('who').value.trim()) return contact() === 'Discord' ? 'Enter your Discord username.' : 'Enter your in-game name.';
+  if (!$('ign').value.trim()) return 'Enter your in-game name.';
+  if (!$('discord').value.trim()) return 'Enter your Discord username.';
   if (!$('confirm').checked) return 'Tick the box to confirm your order.';
   return '';
 }
@@ -242,7 +239,7 @@ function order() {
   let w = { type: 'soon' };
   if (when() === 'range') w = { type: 'range', start: Math.floor(new Date($('tFrom').value) / 1000), end: Math.floor(new Date($('tTo').value) / 1000), tz };
   return { items: items.map(it => ({ uid: it.id, qty: it.qty, from: it.from, to: it.to, evs: it.evs, moves: it.moves })),
-           when: w, contact: contact(), who: $('who').value.trim(), notes: $('notes').value.trim(), shown: total() };
+           when: w, ign: $('ign').value.trim(), discord: $('discord').value.trim(), notes: $('notes').value.trim(), shown: total() };
 }
 // ---- the bot check (Cloudflare Turnstile, invisible): a fresh token for each order
 let tsWidget = null, tsWaiting = null;

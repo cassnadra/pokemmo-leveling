@@ -1,7 +1,7 @@
 # PokeMMO leveling orders
 
 A one-page order form (GitHub Pages): customers add Pokémon to a box, set the levels, EVs and level-up moves per
-species, pick a meeting time and contact method, and the order arrives in Discord. Prices:
+species, pick a meeting time, give their in-game name and Discord username, and the order arrives in Discord. Prices:
 0.17 ¥ per exp, 20,000 ¥ per Pokémon with EVs.
 
 ## Files
@@ -23,10 +23,10 @@ species, pick a meeting time and contact method, and the order arrives in Discor
 
 ## Security
 
-- The page sends only what is ordered (Pokémon, levels, EVs, moves, time, contact, notes). The relay checks it against
+- The page sends only what is ordered (Pokémon, levels, EVs, moves, time, names, notes). The relay checks it against
   its own copy of the data (`relay/data.js`, written by `tools/make_data.py`), works out every price, and writes the
   Discord message itself. A faked price on the page shows up as "⚠ Price mismatch" with the real total.
-- The customer's name and notes lose Discord markdown, links, mentions and timestamps; nothing can ping.
+- The customer's names and notes lose Discord markdown, links, mentions and timestamps; nothing can ping.
 - Every order needs Cloudflare Turnstile (invisible bot check; secret `TURNSTILE_SECRET` on the relay).
 - One order a minute per address, at most 10 a minute per relay instance.
 - The page: a Content-Security-Policy (scripts only from this site and Cloudflare's bot check, sends only to the relay),

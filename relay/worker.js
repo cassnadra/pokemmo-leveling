@@ -1,5 +1,5 @@
 // Order relay (Cloudflare Worker): the order page posts the order here, this checks it, prices it and posts it to
-// Discord. The page sends only WHAT was ordered (Pokemon, levels, EVs, moves, time, contact, notes) - never prices or
+// Discord. The page sends only WHAT was ordered (Pokemon, levels, EVs, moves, time, names, notes) - never prices or
 // message text - so a tampered page or a hand-made request can't change a price, an exp group or what you read.
 //   WEBHOOK_URL        secret: the Discord webhook (nobody can read it from the page, delete it or post through it)
 //   TURNSTILE_SECRET   secret: Cloudflare Turnstile (when set, every order needs a passed bot check)
@@ -30,7 +30,7 @@ function plain(s, max, lines) {
   return s.replace(/[\\`*_~|>#\-[\]()<@:/]/g, c => '\\' + c);
 }
 
-// the order as the page sent it -> {items, when, contact, who, notes, shown} or an error string
+// the order as the page sent it -> {items, when, ign, discord, notes, shown} or an error string
 function check(o, now) {
   if (!o || typeof o !== 'object') return 'not an order';
   if (!Array.isArray(o.items) || !o.items.length || o.items.length > MAX_SPECIES) return 'bad items';
@@ -54,10 +54,11 @@ function check(o, now) {
     try { new Intl.DateTimeFormat('en-GB', { timeZone: tz }); } catch { tz = ''; }
     when = { type: 'range', start, end, tz };
   } else return 'bad time';
-  if (o.contact !== 'Discord' && o.contact !== 'In-game mail') return 'bad contact';
-  if (typeof o.who !== 'string' || !o.who.trim() || o.who.length > 200) return 'bad name';
+  const name = v => typeof v === 'string' && v.trim() && v.length <= 200;
+  if (!name(o.ign)) return 'bad in-game name';
+  if (!name(o.discord)) return 'bad Discord username';
   if (o.notes != null && (typeof o.notes !== 'string' || o.notes.length > 4000)) return 'bad notes';
-  return { items, when, contact: o.contact, who: plain(o.who, MAX_WHO), notes: plain(o.notes || '', MAX_NOTES, true),
+  return { items, when, ign: plain(o.ign, MAX_WHO), discord: plain(o.discord, MAX_WHO), notes: plain(o.notes || '', MAX_NOTES, true),
            shown: Number.isSafeInteger(o.shown) ? o.shown : null };
 }
 
@@ -80,7 +81,8 @@ function embedFor(o) {
   }
   const fields = [
     { name: 'Total', value: yen(total), inline: true },
-    { name: 'Contact', value: `${o.contact}: ${o.who}`, inline: true },
+    { name: 'In-game name', value: o.ign, inline: true },
+    { name: 'Discord', value: o.discord, inline: true },
     { name: 'Meet', value: meet },
   ];
   if (o.notes) fields.push({ name: 'Notes', value: o.notes.slice(0, 1024) });

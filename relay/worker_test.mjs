@@ -20,7 +20,7 @@ const order = (extra = {}) => ({
   items: [{ uid: 25, qty: 2, from: 1, to: 100, evs: [4, 0, 0, 252, 0, 252], moves: ['Thunderbolt', 'Nasty Plot'] },
           { uid: 129, qty: 1, from: 20, to: 20, evs: [0, 0, 0, 0, 0, 252], moves: [] }],
   when: { type: 'range', start: Math.floor(Date.now() / 1000) + 3600, end: Math.floor(Date.now() / 1000) + 7200, tz: 'Europe/Berlin' },
-  contact: 'Discord', who: 'trainer', notes: 'hi', shown: 400000, turnstile: 'tok', ...extra,
+  ign: 'Trainer', discord: 'trainer_dc', notes: 'hi', shown: 400000, turnstile: 'tok', ...extra,
 });
 const send = async (o, opts) => { const n = posted.length; const r = await worker.fetch(req(o, opts), env); return { r, p: posted.length > n ? posted[posted.length - 1].body : null }; };
 
@@ -35,7 +35,8 @@ const e = p && p.embeds[0];
 ok(e.fields[0].value === '400,000 ¥', 'total priced by the relay: 2 x 190,000 + 20,000 = ' + (e && e.fields[0].value));
 ok(e.description.includes('Pikachu** ×2') && e.description.includes('*Medium Fast*') && e.description.includes('Magikarp') && e.description.includes('Lv 20 (EVs only)'), 'lines written by the relay');
 ok(!e.fields.some(f => f.name.includes('mismatch')), 'no mismatch warning when the page showed the right total');
-ok(/<t:\d+:F> → <t:\d+:F>/.test(e.fields[2].value) && e.fields[2].value.includes('Europe/Berlin'), 'meeting time: Discord timestamps + their time');
+ok(e.fields[1].value === 'Trainer' && e.fields[2].value === 'trainer\\_dc', 'both names: ' + (e && e.fields[1].value + ' / ' + e.fields[2].value));
+ok(/<t:\d+:F> → <t:\d+:F>/.test(e.fields[3].value) && e.fields[3].value.includes('Europe/Berlin'), 'meeting time: Discord timestamps + their time');
 ok(!('content' in p) && p.allowed_mentions.parse.length === 0 && p.username === 'Leveling Orders', 'no content, no pings, fixed name');
 ok(verified.includes('tok'), 'the bot check was asked');
 
@@ -56,12 +57,12 @@ await bad([{ uid: 25, qty: 1, from: 50, to: 10, evs: [0, 0, 0, 0, 0, 0], moves: 
 await bad([{ uid: 25, qty: 1, from: 5, to: 5, evs: [0, 0, 0, 0, 0, 0], moves: [] }], 'same level without EVs refused');
 await bad(Array.from({ length: 21 }, (_, i) => ({ uid: i + 1, qty: 1, from: 1, to: 2, evs: [0, 0, 0, 0, 0, 0], moves: [] })), 'over 20 species refused');
 ok((await send(order({ when: { type: 'range', start: 100, end: 200 } }))).r.status === 400, 'a time range in the past refused');
-ok((await send(order({ contact: 'Telegram' }))).r.status === 400, 'an unknown contact method refused');
+ok((await send(order({ ign: '  ' }))).r.status === 400 && (await send(order({ discord: undefined }))).r.status === 400, 'a missing in-game name or Discord username refused');
 
 // injection through what a customer types
-({ p } = await send(order({ who: '@everyone <@&123> [click](https://evil.example)', notes: '**PAID IN FULL** <t:0:F> https://evil.example\n\n\n\n#hdr' })));
-const contact = p.embeds[0].fields[1].value, notes = p.embeds[0].fields.find(f => f.name === 'Notes').value;
-ok(!/(^|[^\\])[@<\[*]/.test(contact.replace('Discord: ', '')) && !/(^|[^\\])(\*\*|<t:|https:\/\/)/.test(notes), 'markdown, mentions, links and timestamps made plain: ' + contact + ' | ' + notes.replace(/\n/g, '\\n'));
+({ p } = await send(order({ discord: '@everyone <@&123> [click](https://evil.example)', notes: '**PAID IN FULL** <t:0:F> https://evil.example\n\n\n\n#hdr' })));
+const contact = p.embeds[0].fields[2].value, notes = p.embeds[0].fields.find(f => f.name === 'Notes').value;
+ok(!/(^|[^\\])[@<\[*]/.test(contact) && !/(^|[^\\])(\*\*|<t:|https:\/\/)/.test(notes), 'markdown, mentions, links and timestamps made plain: ' + contact + ' | ' + notes.replace(/\n/g, '\\n'));
 ok(p.allowed_mentions.parse.length === 0, 'and pings off anyway');
 
 // the bot check and the limits
