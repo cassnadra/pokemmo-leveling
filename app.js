@@ -110,7 +110,7 @@ function drawEditor() {
   const evs = $('evs'); evs.innerHTML = '';
   STATS.forEach((name, i) => {
     const row = document.createElement('div'); row.className = 'ev';
-    row.innerHTML = `<span>${name}</span><input type="range" min="0" max="252" value="${it.evs[i]}"><input type="number" min="0" max="252" value="${it.evs[i]}">`;
+    row.innerHTML = `<span>${name}</span><input type="range" min="0" max="252" value="${it.evs[i]}"><input type="number" min="0" max="252" value="${it.evs[i]}"><button type="button" class="max" title="Set to 252 (or what's left of 510)">252</button>`;
     const [range, num] = row.querySelectorAll('input');
     const set = v => {
       v = Math.max(0, Math.min(252, Math.floor(+v || 0)));
@@ -118,6 +118,7 @@ function drawEditor() {
       it.evs[i] = v; range.value = v; num.value = v; changed();
     };
     range.oninput = () => set(range.value); num.onchange = () => set(num.value);
+    row.querySelector('.max').onclick = () => set(252);
     evs.appendChild(row);
   });
   const mv = $('moves'); mv.innerHTML = '';
