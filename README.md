@@ -21,6 +21,13 @@ species, pick a meeting time, give their in-game name and Discord username, and 
    Add a second one: type Text, name `ALLOWED_ORIGIN`, value `https://cassnadra.github.io`.
 4. Copy the worker's address into `ORDER_URL` in `app.js` (now: https://pokemmo-orders-relay.cassnadra.workers.dev/).
 
+## Pausing orders (queue full)
+
+Cloudflare dashboard -> Workers & Pages -> pokemmo-orders-relay -> Settings -> Variables and Secrets:
+- pause: add `PAUSED` with value `1`. The page shows "Queue full" and the relay refuses orders.
+- open again: delete `PAUSED` (or set it to `0`).
+No code change or push is needed either way.
+
 ## Security
 
 - The page sends only what is ordered (Pokémon, levels, EVs, moves, time, names, notes). The relay checks it against

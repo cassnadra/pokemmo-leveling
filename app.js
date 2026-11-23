@@ -16,6 +16,7 @@ const sprite = img => `https://raw.githubusercontent.com/PokeAPI/sprites/master/
 const yen = n => n.toLocaleString('en-US') + ' ¥';
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+let paused = false;          // queue full (asked from the relay below)
 let items = [];               // one per species: {id, qty, from, to, evs: [6], moves: [names]}
 let sel = 0;                  // the species selected in the box (0 = none)
 const isInt = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
@@ -218,6 +219,7 @@ function rangeError() {
   return '';
 }
 function problem() {
+  if (paused) return 'Queue full - not taking orders right now.';
   if (!items.length) return 'Add at least one Pokémon to your order.';
   const bad = items.find(i => levelError(i));
   if (bad) return `${byId.get(bad.id).name}: ${levelError(bad)}`;
@@ -232,8 +234,12 @@ let sending = false;
 function checkReady() {
   const p = problem();
   $('submit').disabled = !!p || sending;
-  if (!sending && !$('status').classList.contains('ok') && !$('status').classList.contains('err')) status(items.length ? p : '');
+  if (!sending && !$('status').classList.contains('ok') && !$('status').classList.contains('err')) status(items.length || paused ? p : '');
 }
+// the relay says whether orders are paused (queue full); if it can't be reached, orders stay open and it decides
+fetch(ORDER_URL, { cache: 'no-store' }).then(r => r.json()).then(j => {
+  if (j && j.paused === true) { paused = true; $('paused').hidden = false; checkReady(); }
+}).catch(() => {});
 
 // ---- sending
 function order() {

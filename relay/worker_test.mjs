@@ -24,7 +24,13 @@ const order = (extra = {}) => ({
 });
 const send = async (o, opts) => { const n = posted.length; const r = await worker.fetch(req(o, opts), env); return { r, p: posted.length > n ? posted[posted.length - 1].body : null }; };
 
-let r = await worker.fetch(req(null, { method: 'OPTIONS' }), env);
+let r = await worker.fetch(req(null, { method: 'GET' }), env);
+ok(r.status === 200 && (await r.json()).paused === false, 'GET: not paused');
+r = await worker.fetch(req(null, { method: 'GET' }), { ...env, PAUSED: '1' });
+ok((await r.json()).paused === true, 'GET: paused');
+{ const n = posted.length; r = await worker.fetch(req(order()), { ...env, PAUSED: '1' });
+  ok(r.status === 503 && (await r.text()).startsWith('Queue full') && posted.length === n, 'paused: orders refused, nothing sent'); }
+r = await worker.fetch(req(null, { method: 'OPTIONS' }), env);
 ok(r.status === 204 && r.headers.get('Access-Control-Allow-Origin') === env.ALLOWED_ORIGIN, 'CORS preflight');
 ok((await send(order(), { origin: 'https://evil.example' })).r.status === 403, 'other sites refused');
 

@@ -20,6 +20,7 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={'width': 1100, 'height': 900})
     pg.on('pageerror', lambda e: errors.append('page error: %s' % e))
     def hook(route):
+        if route.request.method == 'GET': return route.fulfill(status=200, content_type='application/json', body='{"paused":false}')
         sent.append(json.loads(route.request.post_data)); route.fulfill(status=204, body='')
     pg.route('https://pokemmo-orders-relay.cassnadra.workers.dev/**', hook)   # (the real relay's address, answered here)
     # a stand-in for Cloudflare's Turnstile script: execute() hands back a token
@@ -121,6 +122,16 @@ with sync_playwright() as p:
         ok(o['when']['type'] == 'range' and o['when']['start'] == int(start.replace(second=0, microsecond=0).timestamp()), 'the time range as Unix time')
     ok(pg.locator('#items tr').count() == 0 and pg.locator('#grid button.slot').count() == 0, 'order cleared after sending')
     ok(pg.inner_text('#status') == 'Order sent! I will contact you soon.', 'sent message')
+
+    ok(pg.is_hidden('#paused'), 'not paused: no queue-full notice')
+
+    pz = b.new_page(viewport={'width': 1100, 'height': 900})
+    pz.route('https://pokemmo-orders-relay.cassnadra.workers.dev/**', lambda r: r.fulfill(status=200, content_type='application/json', body='{"paused":true}'))
+    pz.route('https://challenges.cloudflare.com/**', lambda r: r.fulfill(content_type='application/javascript', body=TS))
+    pz.goto(url); pz.wait_for_load_state('networkidle')
+    add(pz, 'pikachu'); pz.fill('#ign', 'a'); pz.fill('#discord', 'b'); pz.check('#confirm')
+    ok(pz.is_visible('#paused') and pz.is_disabled('#submit') and pz.inner_text('#status').startswith('Queue full'), 'paused: queue-full notice, cannot send')
+    pz.screenshot(path=os.path.join(out, 'paused.png'))
 
     ph = b.new_page(viewport={'width': 390, 'height': 844}, device_scale_factor=2)
     ph.goto(url); ph.wait_for_load_state('networkidle')

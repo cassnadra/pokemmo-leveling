@@ -4,6 +4,7 @@
 //   WEBHOOK_URL        secret: the Discord webhook (nobody can read it from the page, delete it or post through it)
 //   TURNSTILE_SECRET   secret: Cloudflare Turnstile (when set, every order needs a passed bot check)
 //   ALLOWED_ORIGIN     the order page's origin
+//   PAUSED             '1' = queue full: orders refused, and the page (which asks with a GET) says so
 import { EXP, SPECIES } from './data.js';
 
 const EV_PRICE = 20000;                      // per Pokemon with any EVs; leveling 0.17 per exp (unitPrice)
@@ -110,9 +111,12 @@ export default {
     const cors = { 'Access-Control-Allow-Origin': allowed, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type',
                    'Vary': 'Origin', 'X-Content-Type-Options': 'nosniff' };
     const reply = (status, text) => new Response(text, { status, headers: cors });
+    const paused = env.PAUSED === '1';
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (req.method === 'GET') return new Response(JSON.stringify({ paused }), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
     if (req.method !== 'POST') return reply(405, 'POST only');
     if (req.headers.get('Origin') !== allowed) return reply(403, 'not from the order page');
+    if (paused) return reply(503, 'Queue full - not taking orders right now.');
 
     const ip = req.headers.get('CF-Connecting-IP') || '?', now = Date.now();
     if (now - (recent.get(ip) || 0) < PER_IP_MS) return reply(429, 'one order a minute');
